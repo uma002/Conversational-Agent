@@ -2,5 +2,5 @@ streamlit
 speechrecognition
 pyttsx3
 requests
-pyaudio
+ffmpeg
 
