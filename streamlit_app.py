@@ -85,3 +85,6 @@ if st.button("🎤 Speak Now"):
         except sr.RequestError:
             st.write("❌ Speech recognition service unavailable.")
 
+# Update requirements.txt file
+with open("requirements.txt", "w") as f:
+    f.write("""streamlit\nspeechrecognition\npyttsx3\nrequests\nffmpeg\n""")
