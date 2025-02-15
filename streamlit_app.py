@@ -19,10 +19,10 @@ ACCENTS = {
     }
 }
 
-def text_to_speech(text, gender, accent):
-    """Convert text to speech with the selected gender and accent, returning an audio buffer."""
+def text_to_speech(text, gender, accent, slow):
+    """Convert text to speech with the selected gender, accent, and speed."""
     lang_code = ACCENTS[gender][accent]
-    tts = gTTS(text=text, lang=lang_code)
+    tts = gTTS(text=text, lang=lang_code, slow=slow)
     audio_buffer = BytesIO()
     tts.write_to_fp(audio_buffer)
     audio_buffer.seek(0)
@@ -48,15 +48,19 @@ gender_choice = st.sidebar.radio("Select Gender:", ["Female", "Male"], index=0)
 # Accent Selection (Dynamically changes based on gender, Default: US)
 accent_choice = st.sidebar.selectbox("Select an Accent:", list(ACCENTS[gender_choice].keys()), index=0)
 
+# Speed Selection (Default: Normal)
+speed_choice = st.sidebar.radio("Speech Speed:", ["Normal", "Slow"], index=0)
+slow_speech = True if speed_choice == "Slow" else False
+
 st.markdown("### Enter your text below:")
 user_input = st.text_area("", height=150)
 
 if st.button("🎤 Convert to Speech"):
     if user_input.strip():
-        audio_buffer = text_to_speech(user_input, gender_choice, accent_choice)
+        audio_buffer = text_to_speech(user_input, gender_choice, accent_choice, slow_speech)
         st.audio(audio_buffer, format="audio/mp3")
         st.markdown(get_audio_download_link(audio_buffer), unsafe_allow_html=True)
-        st.success(f"✅ Speech generated successfully in {gender_choice} ({accent_choice}) accent!")
+        st.success(f"✅ Speech generated successfully in {gender_choice} ({accent_choice}) accent with {'Slow' if slow_speech else 'Normal'} speed!")
     else:
         st.warning("⚠️ Please enter some text to convert.")
 
