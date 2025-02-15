@@ -1,35 +1,53 @@
 import streamlit as st
+import sounddevice as sd
+import numpy as np
 import speech_recognition as sr
-from gtts import gTTS
+import gtts
 import os
-import requests
+import tempfile
+from scipy.io.wavfile import write
 
-def speak(text):
-    tts = gTTS(text=text, lang="en")
-    tts.save("output.mp3")
-    os.system("mpg321 output.mp3")  # Use 'afplay output.mp3' on macOS
+def record_audio(duration=5, samplerate=44100):
+    st.info("Recording... Speak now!")
+    audio = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype=np.int16)
+    sd.wait()
+    return audio, samplerate
 
-def recognize_speech():
+def save_audio(audio, samplerate):
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    write(temp_file.name, samplerate, audio)
+    return temp_file.name
+
+def recognize_speech(audio_file):
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Listening...")
-        recognizer.adjust_for_ambient_noise(source)
-        try:
-            audio = recognizer.listen(source)
-            text = recognizer.recognize_google(audio)
-            return text
-        except sr.UnknownValueError:
-            return "Sorry, I couldn't understand that."
-        except sr.RequestError:
-            return "Could not request results, please check your internet connection."
+    with sr.AudioFile(audio_file) as source:
+        audio_data = recognizer.record(source)
+    try:
+        text = recognizer.recognize_google(audio_data)
+        return text
+    except sr.UnknownValueError:
+        return "Could not understand the audio."
+    except sr.RequestError:
+        return "Could not request results, check internet connection."
 
-def main():
-    st.title("Speech Recognition and Text-to-Speech App")
+def text_to_speech(text):
+    tts = gtts.gTTS(text)
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(temp_file.name)
+    return temp_file.name
+
+st.title("Speech Recognition and Text-to-Speech App")
+
+if st.button("Record Audio"):
+    audio, samplerate = record_audio()
+    audio_file = save_audio(audio, samplerate)
+    st.audio(audio_file, format="audio/wav")
     
-    if st.button("Start Listening"):
-        recognized_text = recognize_speech()
-        st.write(f"Recognized Text: {recognized_text}")
-        speak(recognized_text)
-
-if __name__ == "__main__":
-    main()
+    text = recognize_speech(audio_file)
+    st.write("Recognized Text:", text)
+    
+    tts_file = text_to_speech(text)
+    st.audio(tts_file, format="audio/mp3")
+    
+    os.unlink(audio_file)
+    os.unlink(tts_file)
