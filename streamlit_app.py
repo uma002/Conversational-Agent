@@ -3,9 +3,10 @@ import speech_recognition as sr
 import pyttsx3
 import requests
 import json
+import os
 
-# OpenRouter API Key (Replace with your actual key)
-API_KEY = "your_openrouter_api_key"
+# Load API Key from Streamlit secrets
+API_KEY = st.secrets["API_KEY"]
 
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
