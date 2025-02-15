@@ -1,30 +1,17 @@
 import streamlit as st
-import sounddevice as sd
-import numpy as np
+from streamlit_audio_recorder import st_audio_recorder
 import speech_recognition as sr
 import gtts
-import os
 import tempfile
-from scipy.io.wavfile import write
-
-def record_audio(duration=5, samplerate=44100):
-    st.info("Recording... Speak now!")
-    audio = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype=np.int16)
-    sd.wait()
-    return audio, samplerate
-
-def save_audio(audio, samplerate):
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-    write(temp_file.name, samplerate, audio)
-    return temp_file.name
+import os
+from pydub import AudioSegment
 
 def recognize_speech(audio_file):
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_file) as source:
         audio_data = recognizer.record(source)
     try:
-        text = recognizer.recognize_google(audio_data)
-        return text
+        return recognizer.recognize_google(audio_data)
     except sr.UnknownValueError:
         return "Could not understand the audio."
     except sr.RequestError:
@@ -38,16 +25,22 @@ def text_to_speech(text):
 
 st.title("Speech Recognition and Text-to-Speech App")
 
-if st.button("Record Audio"):
-    audio, samplerate = record_audio()
-    audio_file = save_audio(audio, samplerate)
-    st.audio(audio_file, format="audio/wav")
-    
-    text = recognize_speech(audio_file)
+audio_bytes = st_audio_recorder("Record your voice")
+if audio_bytes:
+    st.audio(audio_bytes, format="audio/wav")
+
+    # Save the recorded audio
+    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    with open(temp_wav.name, "wb") as f:
+        f.write(audio_bytes)
+
+    # Convert to text
+    text = recognize_speech(temp_wav.name)
     st.write("Recognized Text:", text)
-    
+
+    # Convert text to speech
     tts_file = text_to_speech(text)
     st.audio(tts_file, format="audio/mp3")
-    
-    os.unlink(audio_file)
+
+    os.unlink(temp_wav.name)
     os.unlink(tts_file)
