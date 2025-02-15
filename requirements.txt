@@ -5,3 +5,4 @@ requests
 sounddevice
 numpy
 scipy
+pygame
