@@ -1,8 +1,9 @@
 streamlit
 SpeechRecognition
-gTTS
-requests
-numpy
-scipy
 pydub
-streamlit_audio_recorder
+gTTS
+openai
+transformers
+torch
+sounddevice
+numpy
