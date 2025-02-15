@@ -3,3 +3,6 @@ SpeechRecognition
 gTTS
 requests
 sounddevice
+numpy
+scipy
+portaudio19-dev
