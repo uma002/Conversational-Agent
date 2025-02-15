@@ -1,49 +1,34 @@
-import os
 import streamlit as st
 from gtts import gTTS
-from tempfile import TemporaryFile
-import subprocess
+from io import BytesIO
+from pydub import AudioSegment
+from pydub.playback import play
 
-# Define stop words
-STOP_WORDS = ["quit", "exit", "stop", "bye"]
-
-def speak(text):
-    """Convert text to speech using gTTS and play it in real-time"""
-    tts = gTTS(text=text, lang='en')
+def text_to_speech(text):
+    """Convert text to speech and play the audio."""
+    tts = gTTS(text=text, lang="en")
+    audio_buffer = BytesIO()
+    tts.write_to_fp(audio_buffer)
+    audio_buffer.seek(0)
     
-    with TemporaryFile() as fp:
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        
-        # Try using playsound if available
-        try:
-            from playsound import playsound
-            temp_filename = "temp_audio.mp3"
-            with open(temp_filename, "wb") as f:
-                f.write(fp.read())
-            playsound(temp_filename)
-            os.remove(temp_filename)
-        except ImportError:
-            # Fallback to system call (Linux/macOS)
-            try:
-                fp.seek(0)
-                with open("temp_audio.mp3", "wb") as f:
-                    f.write(fp.read())
-                subprocess.run(["mpg321", "temp_audio.mp3"], check=True)
-                os.remove("temp_audio.mp3")
-            except Exception as e:
-                st.error(f"Audio playback failed: {e}")
+    # Convert MP3 to WAV for better compatibility
+    audio = AudioSegment.from_file(audio_buffer, format="mp3")
+    return audio
 
 def main():
-    st.title("Conversational Agent")
-    
-    user_input = st.text_input("Enter your message:")
+    st.title("Text-to-Speech Converter")
+    user_input = st.text_area("Enter text to convert to speech:")
+
     if st.button("Speak"):
-        if user_input.lower() in STOP_WORDS:
-            st.write("Exiting...")
+        if user_input.strip():
+            audio = text_to_speech(user_input)
+            audio.export("output.mp3", format="mp3")  # Save audio file
+            
+            # Play audio in Streamlit
+            st.audio("output.mp3", format="audio/mp3")
+            st.success("Audio generated successfully!")
         else:
-            speak(user_input)
-            st.write("Spoken successfully!")
+            st.warning("Please enter some text!")
 
 if __name__ == "__main__":
     main()
