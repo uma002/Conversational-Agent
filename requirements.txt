@@ -2,6 +2,7 @@ streamlit
 SpeechRecognition
 gTTS
 requests
-sounddevice
 numpy
 scipy
+pydub
+streamlit_audio_recorder
